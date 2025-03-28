@@ -186,6 +186,10 @@ namespace SPG_Fachtheorie.Aufgabe3.Controllers
             var payment = _db.Payments.FirstOrDefault(m => m.Id == id);
             if (payment is null)
                 return Problem("Payment not found", statusCode: 404);
+            if (payment.Id <= 0)
+            {
+                return Problem("Payment not found", statusCode: 404);
+            }
             if (payment.Confirmed != null)
                 return Problem("Payment already confirmed", statusCode: 400);
             payment.Confirmed = cmd.Confirmed;
