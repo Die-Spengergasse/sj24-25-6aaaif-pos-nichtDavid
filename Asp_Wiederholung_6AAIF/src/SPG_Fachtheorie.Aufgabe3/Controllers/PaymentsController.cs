@@ -84,15 +84,7 @@ namespace SPG_Fachtheorie.Aufgabe3.Controllers
             var payment = new Payment(
                 cashDesk, cmd.PaymentDateTime, employee, paymentType);
             _db.Payments.Add(payment);
-            try
-            {
-                _db.SaveChanges();
-            }
-            catch (DbUpdateException e)
-            {
-                return Problem(e.InnerException?.Message ?? e.Message);
-            }
-            return CreatedAtAction(nameof(AddPayment), new { Id = payment.Id });
+            return TrySave(CreatedAtAction(nameof(AddPayment), new { Id = payment.Id }));
         }
 
         /// <summary>
@@ -152,29 +144,23 @@ namespace SPG_Fachtheorie.Aufgabe3.Controllers
         public IActionResult UpdatePayment(int id, [FromBody] UpdatePaymentCmd cmd)
         {
             if (id != cmd.Id)
-                return Problem("Payment Item not found", statusCode: 400);
+                return Problem("Invalid payment item ID", statusCode: 404);
             var paymentItem = _db.PaymentItems.FirstOrDefault(m => m.Id == id);
             if (paymentItem is null)
                 return Problem("Payment Item not found", statusCode: 404);
-            /*if (paymentItem.LastUpdate != cmd.LastUpdate)
-                return Problem("Payment item has changed", statusCode: 400);*/
+            var payment = _db.Payments.FirstOrDefault(m => m.Id == cmd.PaymentId);
+            if (payment is null)
+                return Problem("Payment not found", statusCode: 400);
+            if (paymentItem.LastUpdate != cmd.LastUpdate)
+                return Problem("Payment item has changed", statusCode: 400);
             /*if(paymentItem.Payment.Id != cmd.PaymentId)
                 return Problem("Invalid payment item ID", statusCode: 400);*/
 
             paymentItem.ArticleName = cmd.ArticleName;
             paymentItem.Amount = cmd.Amount;
             paymentItem.Price = cmd.Price;
-            //paymentItem.Payment.Id = cmd.PaymentId;
             paymentItem.LastUpdate = DateTime.UtcNow;
-            try
-            {
-                _db.SaveChanges();
-            }
-            catch (DbUpdateException e)
-            {
-                return Problem(e.InnerException?.Message ?? e.Message, statusCode: 400);
-            }
-            return NoContent();
+            return TrySave(new NoContentResult());
         }
 
         [HttpPatch("/api/payments/{id}")]
@@ -193,15 +179,20 @@ namespace SPG_Fachtheorie.Aufgabe3.Controllers
             if (payment.Confirmed != null)
                 return Problem("Payment already confirmed", statusCode: 400);
             payment.Confirmed = cmd.Confirmed;
+            return TrySave(new NoContentResult());
+        }
+
+        private IActionResult TrySave(IActionResult successResult)
+        {
             try
             {
                 _db.SaveChanges();
+                return successResult;
             }
             catch (DbUpdateException e)
             {
-                return Problem(e.InnerException?.Message ?? e.Message, statusCode: 400);
+                return Problem(e.InnerException?.Message ?? e.Message);
             }
-            return NoContent();
         }
     }
 }
