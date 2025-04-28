@@ -70,7 +70,7 @@ namespace SPG_Fachtheorie.Aufgabe1.Services
         public void AddPaymentItem(NewPaymentItemCommand cmd)
         {
             var payment = _db.Payments
-                .FirstOrDefault(p => p.Id == cmd.Payment.Id);
+                .FirstOrDefault(p => p.Id == cmd.Payment);
             if (payment is null)
                 throw new PaymentServiceException("Payment not found") { NotFoundException = true };
             if (payment.Confirmed is null)

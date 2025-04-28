@@ -20,6 +20,6 @@ namespace SPG_Fachtheorie.Aufgabe1.Commands
         decimal Price,
 
         [Range(1, int.MaxValue, ErrorMessage = "PaymentId must be a positive.")]
-        Payment Payment
+        int Payment
     );
 }
