@@ -77,7 +77,7 @@ namespace SPG_Fachtheorie.Aufgabe3.Controllers
             try
             {
                 var payment = _service.CreatePayment(cmd);
-                return CreatedAtAction(nameof(AddPayment), new { payment.Id });
+                return CreatedAtAction(nameof(AddPayment), new { Id = payment.Id });
             }
             catch (PaymentServiceException e)
             {
@@ -93,26 +93,54 @@ namespace SPG_Fachtheorie.Aufgabe3.Controllers
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public IActionResult DeletePayment(int id, [FromQuery] bool deleteItems) =>
-            CallServiceMethod(() =>
-            {
-                _service.DeletePayment(id, deleteItems);
-                return NoContent();
-            });
-        
-
-
-        private IActionResult CallServiceMethod(Func<IActionResult> serviceCall)
+        public IActionResult DeletePayment(int id, [FromQuery] bool deleteItems)
         {
             try
             {
-                return serviceCall();
+                _service.DeletePayment(id, deleteItems);
+                return NoContent();
             }
-            catch (EmployeeServiceException e) when (e.NotFoundException)
+            catch (PaymentServiceException e)
+            {
+                return Problem(e.Message, statusCode: 400);
+            }
+        }
+
+        //[HttpPut("/api/paymentItems/{id}")]
+        //public IActionResult UpdatePaymentItem(int id, UpdatePaymentItemCommand cmd)
+        //{
+        //    if (id != cmd.Id)
+        //        return Problem("Invalid payment item ID", statusCode: 400);
+
+        //    var paymentItem = _db.PaymentItems.FirstOrDefault(p => p.Id == id);
+        //    if (paymentItem is null)
+        //        return Problem("Payment Item not found", statusCode: 404);
+        //    var payment = _db.Payments.FirstOrDefault(p => p.Id == cmd.PaymentId);
+        //    if (payment is null)
+        //        return Problem("Payment not found", statusCode: 400);
+        //    if (paymentItem.LastUpdated != cmd.LastUpdated)
+        //        return Problem("Payment item has changed", statusCode: 400);
+
+        //    paymentItem.ArticleName = cmd.ArticleName;
+        //    paymentItem.Amount = cmd.Amount;
+        //    paymentItem.Price = cmd.Price;
+        //    paymentItem.LastUpdated = DateTime.UtcNow;
+        //    return TrySave(new NoContentResult());
+        //}
+
+        [HttpPatch("{id}")]
+        public IActionResult UpdateConfirmed(int id)
+        {
+            try
+            {
+                _service.ConfirmPayment(id);
+                return NoContent();
+            }
+            catch (PaymentServiceException e) when (e.NotFoundException)
             {
                 return Problem(e.Message, statusCode: 404);
             }
-            catch (EmployeeServiceException e)
+            catch (PaymentServiceException e)
             {
                 return Problem(e.Message, statusCode: 400);
             }
